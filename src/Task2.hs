@@ -12,7 +12,7 @@ import Prelude hiding (reverse, map, filter, sum, foldl, foldr, length, head, ta
 -- You can reuse already implemented functions from Task1
 -- by listing them in this import clause
 -- NOTE: only listed functions are imported, everything else remains hidden
-import Task1 (reverse, map, sum)
+import Task1 (reverse, map, sum, toDigits)
 
 -----------------------------------
 --
@@ -25,7 +25,19 @@ import Task1 (reverse, map, sum)
 -- 1
 
 luhnModN :: Int -> (a -> Int) -> [a] -> Int
-luhnModN = error "TODO: define luhnModN"
+luhnModN n f l = (n - (sum (map (normalize n) (doubleLast (map f l))) `mod` n)) `mod` n
+
+normalize :: Int -> Int -> Int
+normalize n m | m < n = m
+              | otherwise = m - n + 1
+
+doubleLast :: [Int] -> [Int]
+doubleLast = reverse . doubleFirst . reverse
+
+doubleFirst :: [Int] -> [Int]
+doubleFirst [] = []
+doubleFirst [x] = [2*x]
+doubleFirst (x:y:xs) = 2*x : y : doubleFirst xs
 
 -----------------------------------
 --
@@ -37,7 +49,7 @@ luhnModN = error "TODO: define luhnModN"
 -- 1
 
 luhnDec :: [Int] -> Int
-luhnDec = error "TODO: define luhnDec"
+luhnDec = luhnModN 10 id
 
 -----------------------------------
 --
@@ -49,7 +61,7 @@ luhnDec = error "TODO: define luhnDec"
 -- 15
 
 luhnHex :: [Char] -> Int
-luhnHex = error "TODO: define luhnHex"
+luhnHex = luhnModN 16 digitToInt
 
 -----------------------------------
 --
@@ -65,7 +77,10 @@ luhnHex = error "TODO: define luhnHex"
 -- [10,11,12,13,14,15]
 
 digitToInt :: Char -> Int
-digitToInt = error "TODO: define digitToInt"
+digitToInt '0' = 0
+digitToInt 'a' = 10
+digitToInt 'A' = 10
+digitToInt x = digitToInt (pred x) + 1
 
 -----------------------------------
 --
@@ -82,7 +97,7 @@ digitToInt = error "TODO: define digitToInt"
 -- False
 
 validateDec :: Integer -> Bool
-validateDec = error "TODO: define validateDec"
+validateDec n = luhnDec (toDigits (n `div` 10)) == fromInteger (n `mod` 10)
 
 -----------------------------------
 --
@@ -98,5 +113,19 @@ validateDec = error "TODO: define validateDec"
 -- >>> validateHex "123abc0"
 -- False
 
+first :: [a] -> a
+first [] = undefined
+first (x:_) = x
+
+last :: [Char] -> Char
+last = first . reverse
+
+tail :: [a] -> [a]
+tail [] = undefined
+tail (_:xs) = xs
+
+cutLast :: [Char] -> [Char]
+cutLast = reverse . tail . reverse
+
 validateHex :: [Char] -> Bool
-validateHex = error "TODO: define validateHex"
+validateHex l = digitToInt (last l) == luhnModN 16 digitToInt (cutLast l) 
